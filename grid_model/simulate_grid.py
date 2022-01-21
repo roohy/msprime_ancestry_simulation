@@ -14,7 +14,7 @@ class CellDemography:
         self.ss = None
         self.samples = {}
     @staticmethod
-    def name_generator(row,col):
+    def name_generator(row, col):
         return f'd{row+1}_{col+1}'
     def migration_options(self,row,col):
         return zip([row, row, row-1, row+1],[col-1, col+1, col, col])
@@ -26,25 +26,30 @@ class CellDemography:
                 mig_function([name_generator(d1[0],d1[1]),name_generator(d2[0],d2[1])],migration_rate)
         return False
     def add_migration_path(self,d1,d2):
-        if self.check_migration_paths(d1,d2):
+        if self.check_migration_path(d1,d2):
             self.pop.set_symmetric_migration_rate([self.name_generator(d1[0],d1[1]),self.name_generator(d2[0],d2[1])],self.migration_rate)
             return True
         return False
     def setup_migration(self):
         for i in range(self.height):
             for j in range(self.width):
-                d1 = CellDemography.name_generator(i,j)
-                migration_options = lambda x: CellDemography.name_generator(*x), self.migration_options(i,j)
-                res = list(map(lambda d2: self.add_migration_path(d1,d2),migration_options))
+                
+                #These two lines either also check for the options to see if it is a legit path or/and generate a name which is not ideal  checking should be done before name generation or independent of it (durrently the second option is used)
+                #d1 = CellDemography.name_generator(i,j)
+                # migration_options = [CellDemography.name_generator(*item) for item in self.migration_options(i,j) if self.check_migration_path(d1,item)]
+                # migration_options = list(map(lambda x: CellDemography.name_generator(*x), self.migration_options(i,j))) 
+                d1 = (i,j)
+                res = list(map(lambda d2: self.add_migration_path(d1,d2),self.migration_options(i,j) ))
+                print(res)
     def set_size(self,val,key):
         if len(val) > 1:
             if len(val) != self.deme_count:
                 raise ValueError(f'Mismatch between the number of sizes passed and number of available demes for {key}!')
             self.__dict__[key] = np.array(val).reshape((self.height,self.width))
-            self.__dict__['multi_'+val] = True
+            self.__dict__['multi_'+key] = True
         elif len(val) == 1 :
             self.__dict__[key] = val[0]
-            self.__dict__['multi_'+val] = False
+            self.__dict__['multi_'+key] = False
     def set_effective_size(self,ne):
         self.set_size(ne,'ne')
       
@@ -127,7 +132,15 @@ class RecombinationMap():
             start,end = self.border_list[chr_num*2:chr_num*2+2]
             chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
             chrom_ts.dump(f'{output_prefix}_chr{chr_num+1}.ts')
-    
+    def write_vcf(self,ts,output_prefix):
+        n_dip_indv = int(ts.num_samples / 2)
+        indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
+        for chr_num in range(self.chr_count):
+            start,end = self.border_list[chr_num*2:chr_num*2+2]
+            chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
+            with open(f'{output_prefix}_chr{chr_num+1}.vcf', "w") as vcf_file:
+                chrom_ts.write_vcf(vcf_file, individual_names=indv_names)
+            
 class GridSimulation():
     def __init__(self) -> None:
         pass
@@ -154,7 +167,8 @@ class GridSimulation():
         
     def write_to_file(self,output_prefix): 
         self.recomb.write_to_file(self.mts,output_prefix)
-
+    def write_vcf(self,output_prefix):
+        self.recomb.write_vcf(self.mts,output_prefix)
 
 
 
@@ -179,6 +193,7 @@ def main():
     parser.add_argument('--time_to_merge','-t',help='Time (in generations) to panmixia. nonpositive numbers will be treated as inifinity',type=int,default=100)
     parser.add_argument('--ancestral_size','-a',help='Effective size of the ancestral population. Defauls is set to the effective population size of the first deme.',type=int,default=-1)
     parser.add_argument('--random_seed',help='Random seed for randomized parts of the algorithm (MSPRIME)',type=int,default=1234)
+    parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=True)
     args=parser.parse_args()
 
     print(args)
@@ -202,8 +217,10 @@ def main():
     simulator.setup_demography(height,width,migration_rate,migration_dir,sample_size,effective_size,ancestral_size,args.time_to_merge)    
     simulator.setup_model(args.dtwf_duration)
     simulator.setup_recombination(args.chr_length,args.rho)
-    simulator.simulate(args.me,args.random_size)
-    simulator.write_to_file(args.outdir)
+    simulator.simulate(args.me,args.random_seed)
+    if not args.no_tskit:
+        simulator.write_to_file(args.outdir)
+    simulator.write_vcf(args.outdir)
     
 if __name__ == '__main__':
     main()

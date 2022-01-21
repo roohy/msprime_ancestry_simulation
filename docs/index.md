@@ -36,6 +36,7 @@ Mutation rate is unique across all chromosomes and can be set using the `--mu` o
 The random seed for the simulation can be set using the `--random_seed` flag in the grid simulation software. Using the same random seed will result in the exact same results across experiments.
 
 ## Software
+
 The parameter
 Here is an example of the simulation run with a square 3x3 grid with 100 samples per deme and an effective population size of 10,000 per deme. Migration route is downward only and migraiton rate is 0.05. The first 50 generations will be simulated using DTWF model and generations before will use standard coalescent. A single chromosome will be simulatd with 10 million basepairs and a uniform recombination rate of 1e-7. All demes will be moved to a single panmitic ancestral population after 150 generations.
 
@@ -52,9 +53,9 @@ python simulate_grid.py --deme_rows 3 --deme_columns 3
 --random_seed 1234
 ```
 
-This code has been tested using Python 3.7.11 and 3.8. Package dependencies are as follows:
-```
-msprime 1.0.2
-tskit 0.3.7
-numpy 1.21.1
-```
+This code has been tested using Python 3.7.11 and 3.8. The following is the list of package dependencies:
+
+- msprime: 1.0.2
+- tskit: 0.3.7
+- numpy: 1.21.1
+
