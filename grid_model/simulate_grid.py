@@ -1,7 +1,7 @@
 import msprime,argparse
 import numpy as np
 from functools import partial
-from . import config
+from .config import genome_data
 
 
 class CellDemography:
@@ -222,11 +222,11 @@ def main():
     simulator.setup_demography(height,width,migration_rate,migration_dir,sample_size,effective_size,ancestral_size,args.time_to_merge)    
     simulator.setup_model(args.dtwf_duration)
     if args.chr_length[0] == -1:
-        lengths = [config.genome_data[key]['length'] for key in config.genome_data ]
-        rates = [config.genome_data[key]['rate'] for key in config.genome_data ]
+        lengths = [genome_data[key]['length'] for key in genome_data ]
+        rates = [genome_data[key]['rate'] for key in genome_data ]
         simulator.setup_recombination(lengths,rates)
     elif args.rho[0] == -1:
-        rates = [config.genome_data[key]['rate'] for key in config.genome_data ]
+        rates = [genome_data[key]['rate'] for key in genome_data ]
         simulator.setup_recombination(args.chr_length,rates[:len(args.chr_length)])
     else:
         simulator.setup_recombination(args.chr_length,args.rho)
