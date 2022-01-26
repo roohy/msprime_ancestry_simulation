@@ -1,7 +1,7 @@
 import msprime,argparse
 import numpy as np
 from functools import partial
-from .config import genome_data
+from config import genome_data
 
 
 class CellDemography:
@@ -230,7 +230,7 @@ def main():
         simulator.setup_recombination(args.chr_length,rates[:len(args.chr_length)])
     else:
         simulator.setup_recombination(args.chr_length,args.rho)
-    simulator.simulate(args.me,args.random_seed)
+    simulator.simulate(args.mu,args.random_seed)
     if not args.no_tskit:
         simulator.write_to_file(args.outdir)
     simulator.write_vcf(args.outdir)
