@@ -1,6 +1,8 @@
 import msprime,argparse
 import numpy as np
 from functools import partial
+from . import config
+
 
 class CellDemography:
     
@@ -127,19 +129,21 @@ class RecombinationMap():
             recomb_list[::2] = self.recomb_rates
     
         self.rate_map = msprime.RateMap(position=self.border_list,rate=recomb_list)
-    def write_to_file(self,ts,output_prefix):
+    def chr_divider(self, ts):
+        self.chrom_ts_list = []
         for chr_num in range(self.chr_count):
             start,end = self.border_list[chr_num*2:chr_num*2+2]
             chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
-            chrom_ts.dump(f'{output_prefix}_chr{chr_num+1}.ts')
-    def write_vcf(self,ts,output_prefix):
-        n_dip_indv = int(ts.num_samples / 2)
+            self.chrom_ts_list.append(chrom_ts)
+    def write_to_file(self,output_prefix):
+        for chr_num in range(self.chr_count):
+            self.chrom_ts_list[chr_num].dump(f'{output_prefix}_chr{chr_num+1}.ts')
+    def write_vcf(self,output_prefix):
+        n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
         indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
         for chr_num in range(self.chr_count):
-            start,end = self.border_list[chr_num*2:chr_num*2+2]
-            chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
             with open(f'{output_prefix}_chr{chr_num+1}.vcf', "w") as vcf_file:
-                chrom_ts.write_vcf(vcf_file, individual_names=indv_names)
+                self.chrom_ts_list[chr_num].write_vcf(vcf_file, individual_names=indv_names,contig_id=chr_num+1)
             
 class GridSimulation():
     def __init__(self) -> None:
@@ -164,11 +168,12 @@ class GridSimulation():
         self.random_seed = random_seed
         self.ts = msprime.sim_ancestry(samples=self.demo.samples,demography=self.demo.pop,model= self.model,random_seed=random_seed,recombination_rate=self.recomb.rate_map)
         self.mts = msprime.sim_mutations(self.ts,rate=mu,random_seed=random_seed)
-        
+        self.recomb.chr_divider(self.mts)
+
     def write_to_file(self,output_prefix): 
-        self.recomb.write_to_file(self.mts,output_prefix)
+        self.recomb.write_to_file(output_prefix)
     def write_vcf(self,output_prefix):
-        self.recomb.write_vcf(self.mts,output_prefix)
+        self.recomb.write_vcf(output_prefix)
 
 
 
@@ -216,7 +221,15 @@ def main():
     migration_rate = args.migration_rate
     simulator.setup_demography(height,width,migration_rate,migration_dir,sample_size,effective_size,ancestral_size,args.time_to_merge)    
     simulator.setup_model(args.dtwf_duration)
-    simulator.setup_recombination(args.chr_length,args.rho)
+    if args.chr_length[0] == -1:
+        lengths = [config.genome_data[key]['length'] for key in config.genome_data ]
+        rates = [config.genome_data[key]['rate'] for key in config.genome_data ]
+        simulator.setup_recombination(lengths,rates)
+    elif args.rho[0] == -1:
+        rates = [config.genome_data[key]['rate'] for key in config.genome_data ]
+        simulator.setup_recombination(args.chr_length,rates[:len(args.chr_length)])
+    else:
+        simulator.setup_recombination(args.chr_length,args.rho)
     simulator.simulate(args.me,args.random_seed)
     if not args.no_tskit:
         simulator.write_to_file(args.outdir)
