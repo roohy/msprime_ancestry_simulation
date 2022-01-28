@@ -198,7 +198,8 @@ def main():
     parser.add_argument('--time_to_merge','-t',help='Time (in generations) to panmixia. nonpositive numbers will be treated as inifinity',type=int,default=100)
     parser.add_argument('--ancestral_size','-a',help='Effective size of the ancestral population. Defauls is set to the effective population size of the first deme.',type=int,default=-1)
     parser.add_argument('--random_seed',help='Random seed for randomized parts of the algorithm (MSPRIME)',type=int,default=1234)
-    parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=True)
+    parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=False)
+    parser.add_argument('--no_vcf',help='save the vcf file',dest='no_vcf',action='store_false',default=False)
     args=parser.parse_args()
 
     print(args)
@@ -233,7 +234,8 @@ def main():
     simulator.simulate(args.mu,args.random_seed)
     if not args.no_tskit:
         simulator.write_to_file(args.outdir)
-    simulator.write_vcf(args.outdir)
+    if not args.no_vcf:
+        simulator.write_vcf(args.outdir)
     
 if __name__ == '__main__':
     main()
