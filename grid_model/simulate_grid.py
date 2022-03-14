@@ -1,7 +1,9 @@
-import msprime,argparse
+from secrets import choice
+import msprime,argparse,pickle,tskit
 import numpy as np
 from functools import partial
 from config import genome_data
+import make_bed
 
 
 class CellDemography:
@@ -93,6 +95,30 @@ class CellDemography:
                                 description='Ancestral population!')
         self.pop.add_population_split(time=time_to_merge,ancestral='pan',
                                       derived=np.arange(self.height*self.width))
+    def add_bottleneck(self,row,col,bn_size,start_time,bn_duration):
+        deme_name = CellDemography.name_generator(row-1,col-1)
+        original_size = self.get_effective_size(row-1,col-1)
+        print(f'Adding bottleneck for population {deme_name}. This population will'+
+              f'experience a bottleneck at generation {start_time} that lasts for {bn_duration} generations.'+
+              f'During this time, the effective population size for this population will be {bn_size},'+
+              f'before going back to the original size of {original_size}.')
+        self.pop.add_population_parameters_change(start_time,initial_size=bn_size,population=deme_name)
+        self.pop.add_population_parameters_change(start_time+bn_duration,initial_size=original_size,population=deme_name)
+    
+    @staticmethod
+    def bottleneck_parser(self,input_addr):
+        bn_list = []
+        with open(input_addr,'r') as bn_file:
+            for line in bn_file:
+                data = line.strip().split()
+                bn_list.append([int(item) for item in data])
+        return bn_list
+    def add_bottlenecks_from_file(self,input_addr):
+        bn_list = CellDemography.bottleneck_parser()
+        for bn_item in bn_list:
+            self.add_bottleneck(*bn_item)
+        self.pop.sort_events()
+                
 
 
 class DownwardDemography(CellDemography):
@@ -129,21 +155,46 @@ class RecombinationMap():
             recomb_list[::2] = self.recomb_rates
     
         self.rate_map = msprime.RateMap(position=self.border_list,rate=recomb_list)
+    # def set TODO: fix this to extract init functionality out and have a check for load mode 
     def chr_divider(self, ts):
         self.chrom_ts_list = []
         for chr_num in range(self.chr_count):
             start,end = self.border_list[chr_num*2:chr_num*2+2]
             chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
             self.chrom_ts_list.append(chrom_ts)
-    def write_to_file(self,output_prefix):
-        for chr_num in range(self.chr_count):
-            self.chrom_ts_list[chr_num].dump(f'{output_prefix}_chr{chr_num+1}.ts')
+    def _write_single_file(self,ts,output_addr):
+        pickle.dump(self.border_list,open(output_addr+'.bls.pkl','wb'))
+        ts.dump(output_addr+'.ts')
+    def _load_single_file(self, addr):
+        ts = tskit.load(addr+'.ts')
+        self.border_list = pickle.load(open(addr+'.bls.pkl','rb'))
+        self.temp_ts = ts
+        return ts
+    
+    def write_to_file(self,output_prefix,single_file=None):
+        if single_file is not None:
+            self._write_single_file(ts=single_file,output_addr=output_prefix)
+        else:
+            for chr_num in range(self.chr_count):
+                self.chrom_ts_list[chr_num].dump(f'{output_prefix}_chr{chr_num+1}.ts')
     def write_vcf(self,output_prefix):
         n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
         indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
         for chr_num in range(self.chr_count):
             with open(f'{output_prefix}_chr{chr_num+1}.vcf', "w") as vcf_file:
                 self.chrom_ts_list[chr_num].write_vcf(vcf_file, individual_names=indv_names,contig_id=chr_num+1)
+    def write_bed(self,output_prefix,maf=0):
+        n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
+        indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
+        bed_writer = make_bed.BedWriter(self.chrom_ts_list[0],individual_names=indv_names,contig_id=1)
+        with open(output_prefix+'.fam','w') as fam_output:
+            with open(output_prefix+'.bim','w') as bim_output:
+                with open(output_prefix+'.bed','wb') as bed_output:
+                    for chr_num in range(self.chr_count):
+                        bed_writer.contig_id = chr_num+1
+                        bed_writer.tree_sequence = self.chrom_ts_list[chr_num]
+                        bed_writer.write(bed_output,bim_output,fam_output,chr_num == 0,maf)
+
             
 class GridSimulation():
     def __init__(self) -> None:
@@ -164,17 +215,26 @@ class GridSimulation():
         self.recomb = RecombinationMap(chr_lengths,recomb_rates)
     def setup_model(self,dtwf_duration):
         self.model = [msprime.DiscreteTimeWrightFisher(duration=dtwf_duration),msprime.StandardCoalescent()]
+    def setup_bottlenecks(self,bn_file):
+        self.demo.add_bottlenecks_from_file(bn_file)
     def simulate(self,mu,random_seed=1234):
         self.random_seed = random_seed
         self.ts = msprime.sim_ancestry(samples=self.demo.samples,demography=self.demo.pop,model= self.model,random_seed=random_seed,recombination_rate=self.recomb.rate_map)
         self.mts = msprime.sim_mutations(self.ts,rate=mu,random_seed=random_seed)
         self.recomb.chr_divider(self.mts)
 
-    def write_to_file(self,output_prefix): 
-        self.recomb.write_to_file(output_prefix)
+    def write_to_file(self,output_prefix,mode='single'): 
+        if mode == 'single':
+            self.recomb.write_to_file(output_prefix,self.mts)
+        elif mode == 'multiple':
+            self.recomb.write_to_file(output_prefix)
+        elif mode == 'none':
+            print('Tree Sequence data discarded')
     def write_vcf(self,output_prefix):
         self.recomb.write_vcf(output_prefix)
-
+    def write_bed(self,output_prefix,maf=0):
+        self.recomb.write_bed(output_prefix,maf)
+    
 
 
 
@@ -195,11 +255,15 @@ def main():
     parser.add_argument('--deme_rows','-x',help='How many rows of demes to be simulated',type=int,default=3)
     parser.add_argument('--deme_columns','-y',help='How many columns of demes to be simulated',type=int,default=3)
     parser.add_argument('--dtwf_duration','-d',help='Number of generations simulated using DTWF model.',type=int,default=50)
-    parser.add_argument('--time_to_merge','-t',help='Time (in generations) to panmixia. nonpositive numbers will be treated as inifinity',type=int,default=100)
+    parser.add_argument('--time_to_merge','-t',help='Time (in generations) to panmixia. nonpositive numbers will be treated as inifinity',type=int,default=150)
     parser.add_argument('--ancestral_size','-a',help='Effective size of the ancestral population. Defauls is set to the effective population size of the first deme.',type=int,default=-1)
     parser.add_argument('--random_seed',help='Random seed for randomized parts of the algorithm (MSPRIME)',type=int,default=1234)
-    parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=False)
-    parser.add_argument('--no_vcf',help='save the vcf file',dest='no_vcf',action='store_false',default=False)
+    # parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=False)
+    parser.add_argument('--tskit_save',help='How do you want the tskit data to be saved',dest='tskit_mode',type=str,default='single',choices=['single','multiple','none'])
+    parser.add_argument('--make_vcf',help='save the vcf files',dest='make_vcf',action='store_true',default=False)
+    parser.add_argument('--make_bed',help='save a single bed file',dest='make_bed',action='store_true',default=False)
+    parser.add_argument('--bed_maf',help='minor allele frequency filtering for the bed file',default=0,type=float)
+    parser.add_argument('--bottlenecks','-b', dest='bnfile',help='File with bottleneck list', type=str,default='')
     args=parser.parse_args()
 
     print(args)
@@ -220,7 +284,9 @@ def main():
     if len(sample_size) != 1 and len(effective_size) != 1 and len(sample_size) != len(effective_size):
         raise ValueError('Discrepancy between the number of initial sample sizes and effect population sizes passed.')
     migration_rate = args.migration_rate
-    simulator.setup_demography(height,width,migration_rate,migration_dir,sample_size,effective_size,ancestral_size,args.time_to_merge)    
+    simulator.setup_demography(height,width,migration_rate,migration_dir,sample_size,effective_size,ancestral_size,args.time_to_merge)
+    if args.bnfile:
+        simulator.setup_bottlenecks(args.bnfile)
     simulator.setup_model(args.dtwf_duration)
     if args.chr_length[0] == -1:
         lengths = [genome_data[key]['length'] for key in genome_data ]
@@ -232,10 +298,12 @@ def main():
     else:
         simulator.setup_recombination(args.chr_length,args.rho)
     simulator.simulate(args.mu,args.random_seed)
-    if not args.no_tskit:
-        simulator.write_to_file(args.outdir)
-    if not args.no_vcf:
+    simulator.write_to_file(args.outdir,args.tskit_mode)
+    
+    if args.make_vcf:
         simulator.write_vcf(args.outdir)
+    if args.make_bed:
+        simulator.write_bed(args.outdir,args.bed_maf)
     
 if __name__ == '__main__':
     main()
