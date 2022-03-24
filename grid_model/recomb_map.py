@@ -1,6 +1,6 @@
 import msprime,tskit,pickle
 import make_bed
-
+import numpy as np
 class RecombinationMap():
     def __init__(self,chr_lengths,recomb_rates) -> None:
         self.chr_lengths = chr_lengths
