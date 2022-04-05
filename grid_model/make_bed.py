@@ -92,7 +92,7 @@ class BedWriter:
             self.__write_header(bed_output)
         geno_array = np.zeros((len(self.individuals)*2),dtype=np.uint8)
         for variant in self.tree_sequence.variants(samples=self.samples):
-            if variant.num_allles > 9:
+            if variant.num_alleles > 9:
                 raise ValueError('More than 9 alleles is not supported by tskit so we do not support it here.')
             pos = self.transformed_positions[variant.index]
             site_id = variant.site.id
