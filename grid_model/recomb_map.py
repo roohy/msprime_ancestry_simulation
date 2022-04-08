@@ -50,7 +50,7 @@ class TreeIO():
                     for chr_num in range(self.chr_count):
                         bed_writer.contig_id = chr_num+1
                         bed_writer.tree_sequence = self.chrom_ts_list[chr_num]
-                        bed_writer.write(bed_output,bim_output,fam_output,chr_num == 0,maf)
+                        bed_writer.write(bed_output,bim_output,fam_output,chr_num != 0,maf)
 
 class RecombinationMap():
     def __init__(self,chr_lengths,recomb_rates) -> None:

@@ -80,7 +80,7 @@ class BedWriter:
         self.num_individuals = len(self.individuals)
         
     def __write_header(self,bed_output):
-        if 'b' in bed_output.mode:
+        if 'b' not in bed_output.mode:
             raise ValueError('Expected a binary file, text file handle passed instead!')
         bed_output.write(b'\x6c\x1b\x01')
     def __write_famfile(self,fam_output):
