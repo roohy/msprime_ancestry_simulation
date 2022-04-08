@@ -6,6 +6,7 @@ class TreeIO():
         self.ts = ts
         self.border_list = border_list
         self.chr_count = chr_count
+        self.chrom_ts_list = None
     def read_from_file(self,ts_addr,border_list_addr):
         self._read_ts_from_file(ts_addr)
         self._read_border_list_file(border_list_addr)
@@ -35,12 +36,18 @@ class TreeIO():
         self.temp_ts = ts
         return ts
     def write_vcf(self,output_prefix):
+        if self.chrom_ts_list is None:
+            print('No chromosome based Tree Sequence available! So we are making them')
+            self.chr_divider()
         n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
         indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
         for chr_num in range(self.chr_count):
             with open(f'{output_prefix}_chr{chr_num+1}.vcf', "w") as vcf_file:
                 self.chrom_ts_list[chr_num].write_vcf(vcf_file, individual_names=indv_names,contig_id=chr_num+1)
     def write_bed(self,output_prefix,maf=0):
+        if self.chrom_ts_list is None:
+            print('No chromosome based Tree Sequence available! So we are making them')
+            self.chr_divider()
         n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
         indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
         bed_writer = make_bed.BedWriter(self.chrom_ts_list[0],individual_names=indv_names,contig_id=1)
@@ -81,16 +88,16 @@ class RecombinationMap():
     def chr_divider(self, ts):
         if self.tio is None:
             self.tio_init(ts)
-        
-        self.chrom_ts_list = []
-        for chr_num in range(self.chr_count):
-            start,end = self.border_list[chr_num*2:chr_num*2+2]
-            chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
-            self.chrom_ts_list.append(chrom_ts)
+        self.tio.chr_divider()
+        # self.chrom_ts_list = [] TODO:remove these lines after testing
+        # for chr_num in range(self.chr_count):
+        #     start,end = self.border_list[chr_num*2:chr_num*2+2]
+        #     chrom_ts = ts.keep_intervals([[start, end]], simplify=False).trim()
+        #     self.chrom_ts_list.append(chrom_ts)
     def _write_single_file(self,output_addr,ts=None):
         if self.tio is None:
             assert ts is not None
-        self.tio_init(ts)
+            self.tio_init(ts)
         self.tio._write_single_file(output_addr)
         
     
