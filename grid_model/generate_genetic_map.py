@@ -15,4 +15,4 @@ def main():
                 data = line.strip().split()
                 chrom = int(data[0])
                 position = int(data[3])
-                output_map.write(f'{chrom} {position} {combined_rates[chrom-1]} {position*rates[chrom-1]*100}'.encode())
+                output_map.write(f'{chrom} {position} {combined_rates[chrom-1]} {position*rates[chrom-1]*100}\n'.encode())
