@@ -120,11 +120,11 @@ def main():
     
     simulator.setup_model(args.dtwf_duration)
     if args.chr_length[0] == -1:
-        lengths = [genome_data[key]['length'] for key in genome_data ]
-        rates = [genome_data[key]['rate'] for key in genome_data ]
+        lengths = [genome_data[key]['length'] for key in range(1,23) ]
+        rates = [genome_data[key]['rate'] for key in range(1,23) ]
         simulator.setup_recombination(lengths,rates)
     elif args.rho[0] == -1:
-        rates = [genome_data[key]['rate'] for key in genome_data ]
+        rates = [genome_data[key]['rate'] for key in range(1,23) ]
         simulator.setup_recombination(args.chr_length,rates[:len(args.chr_length)])
     else:
         simulator.setup_recombination(args.chr_length,args.rho)
