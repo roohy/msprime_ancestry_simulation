@@ -1,10 +1,11 @@
 from secrets import choice
-import msprime,argparse,pickle,tskit
+import msprime,argparse,pickle,tskit,os
 import numpy as np
 from functools import partial
 from config import genome_data
 import make_bed
 from recomb_map import RecombinationMap
+
 
 
 class CellDemography:
@@ -237,6 +238,9 @@ def main():
     else:
         simulator.setup_recombination(args.chr_length,args.rho)
     simulator.simulate(args.mu,args.random_seed)
+    dirname = os.path.dirname(args.outdir)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     simulator.write_to_file(args.outdir,args.tskit_mode)
     
     if args.make_vcf:
