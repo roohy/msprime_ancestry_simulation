@@ -239,14 +239,20 @@ def main():
         simulator.setup_recombination(args.chr_length,args.rho)
     simulator.simulate(args.mu,args.random_seed)
     dirname = os.path.dirname(args.outdir)
+    print('Simulation finished.')
+    print(f'Checking the output directory at {dirname}...')
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+    print('Generating the TS file...')
     simulator.write_to_file(args.outdir,args.tskit_mode)
-    
+    print('Sequence file finished.')
+    print('Generating the genotype files...')
     if args.make_vcf:
         simulator.write_vcf(args.outdir)
     if args.make_bed:
+        print()
         simulator.write_bed(args.outdir,args.bed_maf)
+        print('Bed file finished')
     
 if __name__ == '__main__':
     main()
