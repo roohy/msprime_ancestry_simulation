@@ -105,10 +105,10 @@ class BedWriter:
                     geno_array[2*ind+1] = 1
                     if variant.genotypes[ind*2 + 1] != 0:
                         mac += 1
-                        geno_array[ind*2] != 1
+                        geno_array[ind*2] = 1
                 elif variant.genotypes[ind*2+1] != 0:
                     mac += 1
-                    geno_array[ind*2 + 1] != 1
+                    geno_array[ind*2 + 1] = 1
             maf = mac/self.num_individuals
             maf = min(1-maf,maf)
             if maf >= min_maf:
