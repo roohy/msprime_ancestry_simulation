@@ -120,9 +120,12 @@ class RecombinationMap():
         else:
             for chr_num in range(self.chr_count):
                 self.chrom_ts_list[chr_num].dump(f'{output_prefix}_chr{chr_num+1}.ts')
-    def write_vcf(self,output_prefix):
+    def write_vcf(self,output_prefix,single_file=False):
         assert self.tio is not None
-        self.tio.write_vcf(output_prefix)
+        if single_file:
+            self.tio.write_single_vcf(output_prefix)
+        else:
+            self.tio.write_vcf(output_prefix)
         
     def write_bed(self,output_prefix,maf=0):
         assert self.tio is not None

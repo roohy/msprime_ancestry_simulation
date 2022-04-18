@@ -170,8 +170,9 @@ class GridSimulation():
             self.recomb.write_to_file(output_prefix)
         elif mode == 'none':
             print('Tree Sequence data discarded')
-    def write_vcf(self,output_prefix):
-        self.recomb.write_vcf(output_prefix)
+    def write_vcf(self,output_prefix,single_file=False):
+        self.recomb.write_vcf(output_prefix,single_file)
+    
     def write_bed(self,output_prefix,maf=0):
         self.recomb.write_bed(output_prefix,maf)
     
@@ -201,6 +202,7 @@ def main():
     # parser.add_argument('--no_tskit',help='also saves the tskit tree sequence file',dest='no_tskit',action='store_false',default=False)
     parser.add_argument('--tskit_save',help='How do you want the tskit data to be saved',dest='tskit_mode',type=str,default='single',choices=['single','multiple','none'])
     parser.add_argument('--make_vcf',help='save the vcf files',dest='make_vcf',action='store_true',default=False)
+    parser.add_argument('--single_vcf',help='Save all variants to a single vcf file',dest='single_vcf',action='store_true',default=True)
     parser.add_argument('--make_bed',help='save a single bed file',dest='make_bed',action='store_true',default=False)
     parser.add_argument('--bed_maf',help='minor allele frequency filtering for the bed file',default=0,type=float)
     parser.add_argument('--bottlenecks','-b', dest='bnfile',help='File with bottleneck list', type=str,default='')
@@ -248,7 +250,7 @@ def main():
     print('Sequence file finished.')
     print('Generating the genotype files...')
     if args.make_vcf:
-        simulator.write_vcf(args.outdir)
+        simulator.write_vcf(args.outdir,args.single_vcf)
     if args.make_bed:
         print()
         simulator.write_bed(args.outdir,args.bed_maf)

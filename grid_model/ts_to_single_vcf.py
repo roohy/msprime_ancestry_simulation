@@ -14,6 +14,7 @@ def main():
     tio.chr_divider()
     print(f'Writing variants in this file: {output_addr}')
     tio.write_single_vcf(output_addr)
+    print('Done!')
 
 if __name__ == '__main__':
     main()

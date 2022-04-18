@@ -16,6 +16,7 @@ def main():
     tio.chr_divider()
     print(f'Writing variants in this file: {output_addr} - Minimum MAF threshold: {maf}')
     tio.write_bed(output_addr,maf=maf)
+    print('Done!')
 
 if __name__ == '__main__':
     main()
