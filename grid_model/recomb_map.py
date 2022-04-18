@@ -35,6 +35,19 @@ class TreeIO():
         self.border_list = pickle.load(open(addr+'.bls.pkl','rb'))
         self.temp_ts = ts
         return ts
+    def write_single_vcf(self,output_prefix):
+        if self.chrom_ts_list is None:
+            print('No chromosome based Tree Sequence available! So we are making them')
+            self.chr_divider()
+        n_dip_indv = int(self.chrom_ts_list[0].num_samples / 2)
+        indv_names = [f"id_{str(i)}" for i in range(1,n_dip_indv+1)]
+        with open(f'{output_prefix}.vcf','w') as vcf_file:
+            append_flag = False
+            for chr_num in range(self.chr_count):
+                writer = make_bed.FVcfWriter(self.chrom_ts_list[chr_num], individual_names=indv_names,contig_id=chr_num+1)
+                writer.write(vcf_file,append_flag)
+                append_flag = True
+        
     def write_vcf(self,output_prefix):
         if self.chrom_ts_list is None:
             print('No chromosome based Tree Sequence available! So we are making them')
