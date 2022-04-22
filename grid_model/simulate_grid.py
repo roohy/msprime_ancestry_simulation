@@ -243,7 +243,8 @@ def main():
     dirname = os.path.dirname(args.outdir)
     print('Simulation finished.')
     print(f'Checking the output directory at {dirname}...')
-    if not os.path.exists(dirname):
+    
+    if dirname != '' and not os.path.exists(dirname):
         os.makedirs(dirname)
     print('Generating the TS file...')
     simulator.write_to_file(args.outdir,args.tskit_mode)
