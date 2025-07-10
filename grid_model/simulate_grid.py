@@ -73,12 +73,12 @@ class CellDemography:
     def setup_population(self,ne=None,ss=None):
         if self.ne is None:
             if ne is None:
-                raise Exception('Effective size is not setup')
+                raise Exception('Effective size is not set up')
             else:
                 self.set_effective_size(ne)
         if self.ss is None:
             if ss is None:
-                raise Exception('Sample size is not setup')
+                raise Exception('Sample size is not set up')
             else:
                 self.set_sample_size(ss)
 

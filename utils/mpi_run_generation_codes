@@ -1,0 +1,110 @@
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr = '/sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/grid_model/simulate_grid.py'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'python {script_addr} -s 500 -x 4 -y 4 --ne 10000 --chr_length -1 --dtwf_duration 100 --time_to_merge 200 '+
+            f'--random_seed 5763 --migration_rate {migration_rates[key]} -o {base_output}{key}/simulated_genome --make_bed --bed_maf 0.01')
+
+
+script_addr = '/sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/grid_model/generate_genetic_map.py'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'python {script_addr} {base_output}{key}/simulated_genome.bim {base_output}{key}/genetic_map.txt.gz')
+
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr = '/sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/grid_model/ts_to_bed.py'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'python {script_addr} {base_output}{key}/simulated_genome.ts {base_output}{key}/simulated_genome.bls.pkl {base_output}{key}/simulated_genome 0.01')
+
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr = '/sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/grid_model/ts_to_single_vcf.py'
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/scratch/shemir03/simulation/'
+for key in migration_rates:
+    print(f'python {script_addr} {base_input}{key}/simulated_genome.ts {base_input}{key}/simulated_genome.bls.pkl {base_output}{key}_simulated_genome.vcf')
+
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/scratch/shemir03/simulation/'
+for key in migration_rates:
+    print(f'plink --vcf {base_output}{key}_simulated_genome.vcf.vcf  --maf 0.01 --make-bed --out {base_input}{key}/simulated_genome_maf1')
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/scratch/shemir03/simulation/'
+for key in migration_rates:
+    print(f'plink --bfile {base_input}{key}/simulated_genome_maf1 --pca --out {base_input}{key}/maf1_pca')
+    print(f'cut -d " " -f 3-  {base_input}{key}/maf1_pca.eigenvec > {base_input}{key}/maf1_pca.eigenvec_noid.txt')
+
+#GENERATE MAP FILE
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr='/sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/grid_model/generate_genetic_map.py'
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'python {script_addr}  {base_output}{key}/simulated_genome_maf1.bim {base_output}{key}/genetic_map_maf1.txt.gz')
+
+#PHASING
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/phasing_script.sh'
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'mkdir {base_output}{key}/phasing/')
+    print(f'{script_addr}   {base_output}{key}/simulated_genome_maf1 {base_output}{key}/phasing {base_output}{key}/phasing/phased_maf1 {base_output}{key}/genetic_map_maf1.txt.gz')
+
+#This one did not need a subfile :D
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/ped_gen_script.sh'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    
+    print(f'{script_addr}   {base_output}{key}/phasing/phased_maf1_chr {base_output}{key}/phasing {base_output}{key}/genetic_map_maf1.txt.gz')
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/run_ilash.sh'
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+for key in migration_rates:
+    print(f'mkdir {base_output}{key}/ilash/')
+    print(f'{script_addr}   {base_input}{key}/phasing/phased_maf1_chr NA {base_output}{key}/ilash/maf1 NA')
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/global_network_generator.sh'
+
+for key in migration_rates:
+    print(f'mkdir {base_output}{key}/global_network/')
+    print(f'{script_addr} {base_input}{key}/ilash/ {base_input}{key}/global_network/')
+    mr1e-6/global_linkedlist_6cm.txt mr1e-6/cmcl/ 2
+
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/mcl_runner.sh'
+
+for key in migration_rates:
+    print(f'{script_addr} {base_input}{key}/global_network/global_linkedlist_6cm.txt {base_input}{key}/global_network/mcl_1_7_cls 1.7')
+
+migration_rates={'mr1e-3':0.001,'mr25e-4':0.0025,'mr5e-3':0.005,'mr75e-4':0.0075,'mr1e-2':0.01,'mr15e-3':0.015,'mr2e-2':0.02,'mr25e-3':0.025,'mr3e-2':0.03,'mr5e-2':0.05}
+base_input = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+base_output = '/sc/arion/projects/ipm2/roohy/simulation/msprime/grid/4x4/migration/'
+script_addr='bash /sc/arion/projects/ipm2/roohy/utils/msprime_ancestry_simulation/utils/cls_run.sh'
+
+for key in migration_rates:
+    print(f'{script_addr} {base_input}{key}/global_network/global_linkedlist_6cm.txt {base_input}{key}/global_network/maf1_6cm')

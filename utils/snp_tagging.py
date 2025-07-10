@@ -1,16 +1,46 @@
 #This code was originally written and provided to me by Dr. Christopher Gignoux
 # first, calculate LD scores for each SNP, and dictionaries of SNPs "in LD"
 
-from numpy import *
-from sys import argv
+import numpy as np 
+import sys
 
+class LDScore:
+    def __init__(self) -> None:
+        self.ld_scores = {}
+        self.in_ld = {}
 
-# first, calculate LD scores for each SNP, and dictionaries of SNPs "in LD"
-assert len(argv) == 3
-infile=  argv[1]
-min_r2 = float(argv[2])
-outfilename = '%s.%s.tags.txt' % (infile,min_r2)
-print('output to %s\n\n' % (outfilename))
+    def add_ld_score(self, snp_id, r2):
+        if snp_id not in self.ld_scores:
+            self.ld_scores[snp_id] = 1 + r2
+        else:
+            self.ld_score[snp_id]  += r2 
+        if snp_id not in self.in_ld:
+            self.in_ld[snp_id] = set()
+    def add_ld_pair(self,snp1,snp2):
+        self.in_ld[snp1].add(snp2)
+        self.in_ld[snp2].add(snp1)
+    def 
+
+def main():
+    input_addr = sys.argv[1]
+    min_r2 = float(sys.argv[2])
+    output_addr = sys.argv[3]
+    ld_score_keeper = LDScore()
+
+    in_ld = {}
+    ld_scores = {}
+    with open(input_addr,'r') as input_file:
+        header = input_file.readline()
+        for line in input_file:
+            data = line.strip().split()
+            r2 = float(line[-1])
+            snp1 = line[2]
+            snp2 = line[5]
+            ld_score_keeper.add_ld_score(snp1,r2)
+            ld_score_keeper.add_ld_score(snp2,r2)
+            if r2 >= min_r2:
+                ld_score_keeper.add_ld_pair(snp1,snp2)
+        
 
 #min_r2 = 0.5
 
